@@ -1,0 +1,51 @@
+[project]
+name = "app"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "accelerate>=1.0.0",
+    "bitsandbytes>=0.43.0",
+    "datasets>=2.20.0",
+    "peft>=0.12.0",
+    "pillow>=11.3.0",
+    "pycocotools>=2.0.10",
+    "qwen-vl-utils>=0.0.8",
+    "tensorboard>=2.20.0",
+    "torch>=2.8.0",
+    "torchvision>=0.23.0",
+    "transformers>=4.51",
+]
+
+[project.optional-dependencies]
+build = [
+    "torch",
+    "setuptools",
+    "packaging"
+]
+compile = [
+    "flash-attn",
+]
+
+[tool.uv]
+no-build-isolation-package = ["flash-attn"]
+
+[[tool.uv.dependency-metadata]]
+name = "flash-attn"
+# version = "2.6.3"
+requires-dist = ["torch", "einops"]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.12.9",
+]
+
+[[tool.uv.index]]
+name = "pytorch-cu129"
+url = "https://download.pytorch.org/whl/cu129"
+explicit = true
+
+[tool.uv.sources]
+torch = { index = "pytorch-cu129" }
+torchvision = { index = "pytorch-cu129" }

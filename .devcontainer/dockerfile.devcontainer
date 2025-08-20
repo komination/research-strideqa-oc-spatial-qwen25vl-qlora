@@ -1,0 +1,24 @@
+FROM public.ecr.aws/docker/library/python:3.13.3-bookworm
+
+ENV UV_TORCH_BACKEND=auto
+ARG USER
+ARG UID
+WORKDIR /app
+
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    sudo \
+    curl \
+    gnupg \
+    jq
+
+# Node.js及びClaude Codeのインストール
+RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
+    apt-get update && \
+    apt-get install -y nodejs
+
+RUN groupadd -g ${UID} ${USER} && \
+    useradd -m -u ${UID} -g ${UID} -s /bin/bash ${USER} && \
+    echo "${USER} ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+
+USER ${USER}

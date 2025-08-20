@@ -1,0 +1,24 @@
+services:
+  app:
+    build:
+      context: .devcontainer
+      dockerfile: dockerfile.devcontainer
+      args: 
+        - USER=${USER_NAME}
+        - UID=${UID}
+    # network_mode: host
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              capabilities: [gpu]
+    extra_hosts:
+      - "localhost:host-gateway"
+    tty: true
+    env_file:
+      - ./.env
+    volumes:
+      - ./:/app
+    
+  
