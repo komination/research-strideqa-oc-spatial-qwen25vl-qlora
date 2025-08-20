@@ -14,3 +14,5 @@ wheels/
 .env
 
 .ruff_cache
+
+qwen25vl_3b_obj_center_qlora
