@@ -12,7 +12,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     gnupg \
     jq
 
-# Node.js及びClaude Codeのインストール
+# Node.jsのインストール
 RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
     apt-get update && \
     apt-get install -y nodejs
