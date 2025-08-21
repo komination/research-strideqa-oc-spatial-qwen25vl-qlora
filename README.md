@@ -39,9 +39,8 @@ uv run compare_one.py \
   --data_json data/stride-qa-mini/object_centric_spatial_qa.json \
   --img_root  data/stride-qa-mini/images \
   --sample_id <id> \
-  --lora_path runs/objspatial/.../adapters/lora_adapter \
+  --lora_path qwen25vl_3b_obj_center_qlora/lora_adapter \
   --model_name Qwen/Qwen2.5-VL-3B-Instruct \
-  --use_4bit
 ```
 
 出力例（要旨）：
