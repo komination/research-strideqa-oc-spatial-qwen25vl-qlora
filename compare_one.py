@@ -1,23 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-1枚のサンプルを指定し、Base と QLoRA 反映モデルを同一設定で生成→簡易評価。
-- 質問は「そのサンプル内の最後の human ターン」を採用（学習と同じ想定）
-- 入力は全景画像1枚のみ（簡易比較）
-- 評価はヒューリスティック：
-    (a) 数値（m, 度など）が含まれる → 最初に出現する数値同士を比較（相対誤差）
-    (b) Yes/No/True/False 系 → 単語表現で比較
-    (c) "Region [k]" 選択系 → 予測に含まれる番号が正解と一致か
-    (d) 上記以外 → 大文字小文字/句読点を無視した簡易文字列一致
-
-使い方例:
-python compare_one.py \
-  --data_json data/stride-qa-mini/object_centric_spatial_qa.json \
-  --img_root  data/stride-qa-mini/images \
-  --sample_id d6553c39 \
-  --lora_path qwen25vl_3b_obj_center_qlora/lora_adapter \
-  --model_name Qwen/Qwen2.5-VL-3B-Instruct \
-  --use_4bit
-"""
 import argparse
 import json
 import os
@@ -105,7 +85,6 @@ def generate(model, processor, messages, max_new_tokens=128, temperature=0.0, to
             eos_token_id=processor.tokenizer.eos_token_id,
             pad_token_id=processor.tokenizer.eos_token_id,
         )
-    # ここが重要：入力ぶんをトークン長で切る
     gen_ids = out_ids[0, input_len:]
     text = processor.tokenizer.decode(gen_ids, skip_special_tokens=True)
     return text.strip()
@@ -168,7 +147,6 @@ def simple_eval(question: str, gt: str, pred: str) -> Dict[str, Any]:
         ok = rel <= 0.25
         return {"type": "numeric", "ok": ok, "gt": gt_num, "pred": pr_num, "rel_err": rel}
 
-    # 4) 文字列ゆる一致
     ok = (normalize_str(gt) == normalize_str(pred))
     return {"type": "string", "ok": ok, "gt": gt, "pred": pred}
 
@@ -180,7 +158,6 @@ def main():
     ap.add_argument("--sample_id", required=True)
     ap.add_argument("--lora_path", required=True, help="学習後の LoRA アダプタ保存先 (…/lora_adapter)")
     ap.add_argument("--model_name", default="Qwen/Qwen2.5-VL-3B-Instruct")
-    ap.add_argument("--use_4bit", action="store_true")
     ap.add_argument("--max_new_tokens", type=int, default=128)
     args = ap.parse_args()
 
@@ -191,13 +168,12 @@ def main():
 
     # モデル & プロセッサ読込
     bnb = None
-    if args.use_4bit:
-        bnb = BitsAndBytesConfig(
-            load_in_4bit=True,
-            bnb_4bit_use_double_quant=True,
-            bnb_4bit_quant_type="nf4",
-            bnb_4bit_compute_dtype=torch.bfloat16,
-        )
+    bnb = BitsAndBytesConfig(
+        load_in_4bit=True,
+        bnb_4bit_use_double_quant=True,
+        bnb_4bit_quant_type="nf4",
+        bnb_4bit_compute_dtype=torch.bfloat16,
+    )
 
     def load_base():
         return Qwen2_5_VLForConditionalGeneration.from_pretrained(
@@ -211,7 +187,6 @@ def main():
     processor = AutoProcessor.from_pretrained(
         args.model_name,
         trust_remote_code=True,
-        # 評価は安全側の画素数に（必要なら上げてOK）
         min_pixels=256*28*28,
         max_pixels=512*28*28,
     )
@@ -248,7 +223,6 @@ def main():
     print(ft_pred)
     print("Eval:", ft_eval)
 
-    # ざっくり比較
     def to_score(d):
         if d["type"] == "numeric":
             return (1 if d["ok"] else 0, f"rel_err={d['rel_err']:.3f}" if d["rel_err"] is not None else "N/A")
